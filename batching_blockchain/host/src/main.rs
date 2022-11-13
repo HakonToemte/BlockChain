@@ -1,3 +1,4 @@
+
 // Licensed to the Apache Software Foundation (ASF) under one
 // or more contributor license agreements.  See the NOTICE file
 // distributed with this work for additional information
@@ -42,7 +43,7 @@ pub struct Block {
     pub id: u32,
     pub hash: String,
     pub previous_hash: String,
-    pub timestamp: i64,
+    pub timestamp: String,
     pub data: String,
     pub signature: String,
 }

@@ -42,7 +42,7 @@ pub struct Block {
     pub id: u32,
     pub hash: String,
     pub previous_hash: String,
-    pub timestamp: i64,
+    pub timestamp: String,
     pub data: String,
     pub signature: String,
 }
@@ -64,21 +64,23 @@ impl App {
             previous_block = &self.blocks.last().unwrap();
         }
         let id = previous_block.id +1;
-        let next_block = Block::new(id as u32,&previous_block.hash,&data, &signature, &hash);
+        let mut time = Time::new();
+        time.ree_time();
+        let next_block = Block::new(id as u32,&previous_block.hash,&data, &signature, &hash, time);
         self.blocks.push(next_block);
 
     }
 }
 
 impl Block {
-    pub fn new(id: u32, previous_hash: &str, data: &str, signature: &str, hash: &str) -> Self {
+    pub fn new(id: u32, previous_hash: &str, data: &str, signature: &str, hash: &str, time:Time) -> Self {
         Self {
             id: id,
             previous_hash: String::from(previous_hash), // hexstring
             data: String::from(data), // readable text
             hash: String::from(hash), // hexstring
             signature: String::from(signature), // hexstring
-            timestamp: 123
+            timestamp: format!("{}", time),
         }
     }
 }
@@ -93,7 +95,7 @@ impl Default for State {
         Self {
             key_pair: gen_key().unwrap(),                // for ED25519 key encryption
             previous_app: App::genesis(Block::new(0_u32, "genesis", 
-                "genesis", "signature genesis", "026A64FB40C946B5ABEE2573702828694D5B4C43")),
+                "genesis", "signature genesis", "026A64FB40C946B5ABEE2573702828694D5B4C43", Time::new())),
         }
     }
 }

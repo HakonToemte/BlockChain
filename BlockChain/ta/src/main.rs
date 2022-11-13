@@ -36,19 +36,19 @@ pub struct Block {
     pub id: u32,
     pub hash: String,
     pub previous_hash: String,
-    pub timestamp: i64,
+    pub timestamp: String,
     pub data: String,
     pub signature: String,
 }
 impl Block {
-    pub fn new(id: u32, previous_hash: &str, data: &str, signature: &str, hash: &str) -> Self {
+    pub fn new(id: u32, previous_hash: &str, data: &str, signature: &str, hash: &str, time: Time) -> Self {
         Self {
             id: id,
             previous_hash: String::from(previous_hash), // hexstring
             data: String::from(data), // readable text
             hash: String::from(hash), // hexstring
             signature: String::from(signature), // hexstring
-            timestamp: 123
+            timestamp: format!("{}", time),
         }
     }
 }
@@ -61,7 +61,9 @@ impl State{
     pub fn add_block(&mut self, data: String, signature: String, hash: String) -> Block { 
         let previous_block = &self.previous_block;
         let id = previous_block.id +1;
-        let next_block = Block::new(id as u32,&previous_block.hash,&data, &signature, &hash);
+        let mut time = Time::new();
+        time.ree_time();
+        let next_block = Block::new(id as u32,&previous_block.hash,&data, &signature, &hash, time);
         return next_block
 
     }
@@ -70,7 +72,7 @@ impl Default for State {
     fn default() -> Self {
         Self {
             key_pair: gen_key().unwrap(),                // for ED25519 key encryption
-            previous_block: Block::new(0_u32, "genesis", "genesis", "signature genesis", "026A64FB40C946B5ABEE2573702828694D5B4C43"),
+            previous_block: Block::new(0_u32, "genesis", "genesis", "signature genesis", "026A64FB40C946B5ABEE2573702828694D5B4C43", Time::new()),
         }
     }
 }
@@ -125,7 +127,7 @@ fn serialize_block(mut block_buffer: &mut [u8], block: &Block) -> Result<u32>{
         return Err(Error::new(ErrorKind::ShortBuffer));
     }
     let len = block_buffer.write(serialized.as_bytes()).unwrap();
-    //trace_println!("length of block = {}", len);
+    trace_println!("length of block = {}", len);
     Ok(len as u32)
 }
 fn get_public_key(state: &mut State, params: &mut Parameters) -> Result<()> {
@@ -167,16 +169,12 @@ fn hash(state: &mut State, input: &mut [u8]) -> Vec<u8>{
     let mut length_for_hash = 0_u32;
     let mut iter = input.split(|num| num == &32_u8).peekable();
     digestop.update(input);
-    //while let Some(word_as_bytes) = iter.next() {
-    //    digestop.update(word_as_bytes);
-    //}
     let previous_hash_bytes = previous_hash.as_bytes();
     let mut output = &mut [0u8; 32];
     match digestop.do_final(&previous_hash_bytes, output) {
         Err(e) => Err(e),
         Ok(hash_length) => {
             length_for_hash = hash_length as u32;
-            //trace_println!("hash length {}", length_for_hash);
             Ok(())
         }
     };

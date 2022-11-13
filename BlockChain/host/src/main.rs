@@ -37,7 +37,7 @@ pub struct Block {
     pub id: u32,
     pub hash: String,
     pub previous_hash: String,
-    pub timestamp: i64,
+    pub timestamp: String,
     pub data: String,
     pub signature: String,
 }
@@ -51,7 +51,7 @@ fn get_public_key(session: &mut Session, public_key_buffer:  &mut [u8]) -> optee
 
 
 fn new_block(session: &mut Session, app_buffer: &mut [u8], string_to_log: &str) -> optee_teec::Result<usize> {
-    println!("string_to_log: {}", string_to_log);
+    println!("string_to_log a??? : {}", string_to_log);
     let p0 = ParamTmpRef::new_output(app_buffer);
     let p1 = ParamTmpRef::new_input(string_to_log.as_bytes());
     let p2 = ParamValue::new(0, 0, ParamType::ValueInout);
