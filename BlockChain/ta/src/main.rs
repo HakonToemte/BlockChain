@@ -41,14 +41,14 @@ pub struct Block {
     pub signature: String,
 }
 impl Block {
-    pub fn new(id: u32, previous_hash: &str, data: &str, signature: &str, hash: &str, time: Time) -> Self {
+    pub fn new(id: u32, previous_hash: &str, data: &str, signature: &str, hash: &str, time: &str) -> Self {
         Self {
             id: id,
             previous_hash: String::from(previous_hash), // hexstring
             data: String::from(data), // readable text
             hash: String::from(hash), // hexstring
             signature: String::from(signature), // hexstring
-            timestamp: format!("{}", time),
+            timestamp: String::from(time),
         }
     }
 }
@@ -58,11 +58,9 @@ pub struct State {
     pub previous_block: Block,
 }
 impl State{
-    pub fn add_block(&mut self, data: String, signature: String, hash: String) -> Block { 
+    pub fn add_block(&mut self, data: String, signature: String, hash: String, time: &str) -> Block { 
         let previous_block = &self.previous_block;
         let id = previous_block.id +1;
-        let mut time = Time::new();
-        time.ree_time();
         let next_block = Block::new(id as u32,&previous_block.hash,&data, &signature, &hash, time);
         return next_block
 
@@ -72,7 +70,7 @@ impl Default for State {
     fn default() -> Self {
         Self {
             key_pair: gen_key().unwrap(),                // for ED25519 key encryption
-            previous_block: Block::new(0_u32, "genesis", "genesis", "signature genesis", "026A64FB40C946B5ABEE2573702828694D5B4C43", Time::new()),
+            previous_block: Block::new(0_u32, "genesis", "genesis", "signature genesis", "026A64FB40C946B5ABEE2573702828694D5B4C43", "GenesisTimeStamp",)
         }
     }
 }
@@ -143,13 +141,16 @@ fn new_block(state: &mut State, params: &mut Parameters) -> Result<()> {
     let mut p1 = unsafe { params.1.as_memref().unwrap() }; // text to hash
     let mut p2 = unsafe { params.2.as_value().unwrap()}; // length of Block object
     let input = p1.buffer();
-    let mut hash_vector: Vec<u8> = hash(state, input);
+    let mut time = Time::new();
+    time.ree_time();
+    let time_string = format!("{}",time);
+    let mut hash_vector: Vec<u8> = hash(state, input, &time_string);
     // Create digital signature using private key
     let mut signature_buffer = [0u8; SIGNATURE_SIZE];
     sign(state, &mut hash_vector, &mut signature_buffer).unwrap();
     let signature= byte_vector_to_hexstring(&mut signature_buffer.to_vec());
     // Create next block
-    let next_block = state.add_block(String::from_utf8(input.to_vec()).unwrap(), signature, byte_vector_to_hexstring(&mut hash_vector));
+    let next_block = state.add_block(String::from_utf8(input.to_vec()).unwrap(), signature, byte_vector_to_hexstring(&mut hash_vector),&time_string);
 
     // serializes the block and sets p2 to its length
     let len = serialize_block(p0.buffer(), &next_block).unwrap();
@@ -163,7 +164,7 @@ fn sign(state: &mut State, plain_text: &mut [u8], signature_buffer: &mut [u8]) -
 
     Ok(())
 }
-fn hash(state: &mut State, input: &mut [u8]) -> Vec<u8>{
+fn hash(state: &mut State, input: &mut [u8], time:&str) -> Vec<u8>{
     let digestop = Digest::allocate(AlgorithmId::Sha256).unwrap();
     let previous_hash = &state.previous_block.hash;
     let mut length_for_hash = 0_u32;
